@@ -44,7 +44,6 @@ This repository contains the fixed and enhanced version of a Go web application 
 - **Base Image Optimization:** Switched to a multi-stage build using a lightweight base image (e.g., `alpine` or `scratch`) to reduce the final image size.
 - **Dependency Management:** Ensured `go.mod` and `go.sum` files are copied first for layer caching.
 - **Correct Build & CMD:** Fixed build commands and the executable path in the final stage from `CMD ["/bin/myapp"]` to `CMD ["./main"]`.
-![Image size](Images/image_size.png)
 
 ### Go Application
 - **Error Handling:** Added proper error handling when converting visit count values and setting data in Redis.
@@ -58,8 +57,10 @@ This repository contains the fixed and enhanced version of a Go web application 
 ![Image size](Images/ns.png)
   
 - **Persistent Storage:** Redis StatefulSet uses `volumeClaimTemplates` to dynamically provision persistent storage.
-- **Headless Service:** A headless service (`redis-headless`) is used to allow direct pod-to-pod communication for Redis.
-- **InitContainer:** The Go app deployment includes an initContainer that waits for Redis connectivity before starting the main container.
+- **Go App Service:** A `NodePort service`is used to expose the Go application externally, allowing users to access it via a specific port on the node. This facilitates easy testing and access without requiring a LoadBalancer.
+- **Redis Headless Service:** A `headless service` is implemented for Redis, enabling direct pod-to-pod communication within the cluster. This is crucial for stateful applications like Redis, as it allows the Go app to connect directly to the Redis pod without a load balancer, ensuring low-latency access.
+- **StatefulSet for Redis:** Redis is deployed using a StatefulSet, which provides stable network identities and persistent storage through volumeClaimTemplates. This ensures data persistence across pod restarts and is essential for maintaining the integrity of cached data.
+- **InitContainer:** An `initContainer` is included in the Go app deployment to ensure that the application only starts after Redis is fully operational. This prevents connection errors during startup, enhancing the reliability of the application.
 
 ## How to Run Locally
 
@@ -70,6 +71,14 @@ This repository contains the fixed and enhanced version of a Go web application 
    ```sh
    docker-compose up --build
    ```
+   ![Image size](Images/docker_build.png)
+
+1. **Uploaded local image to docker hub publicly hafez599/go-redis-app:v1**
+
+   ```sh
+   docker push hafez599/go-redis-app:v1
+   ```
+   ![Image size](Images/docker_push.png)
 
 2. **Access the Application:**
    - Open your browser and navigate to `http://localhost:8080` to see the visitor count.
@@ -79,30 +88,47 @@ This repository contains the fixed and enhanced version of a Go web application 
 1. **Apply the Kubernetes Manifests:**
 
    ```sh
-   kubectl apply -f K8S/namespace.yaml
+    kubectl apply -f namespace.yaml
+
+    kubectl apply -f redis-statefulset.yaml
+
+    kubectl apply -f redis-headless-service.yaml
+
+    kubectl apply -f go-app-deployment.yaml
+
+    kubectl apply -f go-app-service.yaml
    ```
-  ![Image size](Images/ns.png)
-  
-   ```sh
-   kubectl apply -f K8S/redis-statefulset.yaml
-   ```
-  ![Image size](Images/ns.png)
+    ![Image size](Images/apply_files.png)
+
+    **The app pod will not run until redis pod run successfully**
+
+    ![Image size](Images/initcontainer.png)
 
 2. **Check the Status of Deployments:**
 
    ```sh
-   kubectl get pods --namespace app
-   kubectl get pods --namespace db
+   kubectl get all -n app
    ```
+    ![Image size](Images/get_all_app.png)
 
+   ```sh
+   kubectl get all -n db
+   ```
+    ![Image size](Images/get_all_db.png)
 3. **Access the Go App:**
    - Get the NodePort assigned:
 
    ```sh
-   kubectl get services --namespace app
+   minikube ip
+   kubectl get services -n app
    ```
+    ![Image size](Images/ip.png)
+   - Open your browser and navigate to `http://192.168.49.2:30007/`.
 
-   - Open your browser and navigate to `http://<NodeIP>:<NodePort>`.
+      ![Image size](Images/from_browser.png)
+   - Using curl command.
+
+      ![Image size](Images/using_curl.png)
 
 ## Evidence of Work
 
@@ -111,14 +137,24 @@ This repository contains the fixed and enhanced version of a Go web application 
   ```sh
   docker images
   ```
+  ![Image size](Images/image_size.png)
 
 - **Kubernetes Logs:** Check logs for both Go app and Redis:
 
   ```sh
-  kubectl logs <go-app-pod-name> --namespace app
-  kubectl logs <redis-pod-name> --namespace db
+  kubectl logs go-app-6c7c49586b-cqqx9 --namespace app
   ```
+  ![Image size](Images/app_log.png)
 
-## Conclusion
+  ```sh
+  kubectl logs redis-0  --namespace db
+  ```
+  ![Image size](Images/redis_log.png)
 
-This project demonstrates the ability to troubleshoot, optimize, and deploy a Go web application using Redis in a Kubernetes environment. The enhancements made ensure better performance, error handling, and efficient resource management.
+   - Redis persistent storage.
+  ```sh
+  kubectl describe pod redis-0 -n db
+  ```
+  ![Image size](Images/describe1.png)
+
+  ![Image size](Images/describe2.png)
