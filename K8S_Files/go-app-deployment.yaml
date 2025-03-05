@@ -13,27 +13,19 @@ spec:
       labels:
         app: go-app
     spec:
+      initContainers:
+        - name: wait-for-redis
+          image: busybox
+          command: ['sh', '-c', 'until nc -zv redis-0.redis-headless.db.svc.cluster.local 6379; do echo "Waiting for Redis..."; sleep 3; done']
       containers:
-      - name: go-app
-        image: visitor-app3:latest 
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 8080
-        envFrom:
-        - configMapRef:
-            name: go-app-config
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: go-app-service
-  namespace: app
-spec:
-  type: NodePort  # Change to LoadBalancer if available
-  selector:
-    app: go-app
-  ports:
-  - protocol: TCP
-    port: 8080
-    targetPort: 8080
-    nodePort: 30080
+        - name: go-app
+          image: hafez599/go-redis-app:v1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_HOST
+              value: "redis-0.redis-headless.db.svc.cluster.local"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: APP_PORT
+              value: "8080"

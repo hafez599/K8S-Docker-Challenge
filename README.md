@@ -30,7 +30,9 @@ This repository contains the fixed and enhanced version of a Go web application 
 ### Dockerfile
 - **Base Image Optimization:** Switched to a multi-stage build using a lightweight base image (e.g., `alpine` or `scratch`) to reduce the final image size.
 - **Dependency Management:** Ensured `go.mod` and `go.sum` files are copied first for layer caching.
-- **Correct Build & CMD:** Fixed build commands and the executable path in the final stage.
+- **Correct Build & CMD:** Fixed build commands and the executable path in the final stage CMD ["bin/myapp"] to CMD ["app/myapp"].
+<img src="./Imges/image_size.png" alt="Alt text" width="500" />
+
 
 ### Go Application
 - **Redis Connection:** Improved the formatting for reading environment variables for `REDIS_HOST` and `REDIS_PORT`.

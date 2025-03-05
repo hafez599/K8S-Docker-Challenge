@@ -4,7 +4,7 @@ metadata:
   name: redis
   namespace: db
 spec:
-  serviceName: "redis-service"
+  serviceName: redis-headless
   replicas: 1
   selector:
     matchLabels:
@@ -15,15 +15,18 @@ spec:
         app: redis
     spec:
       containers:
-      - name: redis
-        image: redis:6-alpine
-        ports:
-        - containerPort: 6379
-        volumeMounts:
-        - name: redis-data
-          mountPath: /data
-        command: ["redis-server", "--appendonly", "yes"]
-      volumes:
-      - name: redis-data
-        persistentVolumeClaim:
-          claimName: redis-pvc
+        - name: redis
+          image: redis:7.0
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

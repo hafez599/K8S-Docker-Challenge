@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: go-app-config
-  namespace: app
-data:
-  REDIS_ADDR: "redis-service.db.svc.cluster.local:6379"
-  PORT: "8080"
-  
