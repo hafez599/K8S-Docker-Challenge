@@ -44,6 +44,7 @@ This repository contains the fixed and enhanced version of a Go web application 
 - **Namespaces:** The application is deployed in two namespaces:
   - `app` – for the Go application.
   - `db` – for Redis.
+    
     ![Image size](Images/ns.png)
 - **Persistent Storage:** Redis StatefulSet uses `volumeClaimTemplates` to dynamically provision persistent storage.
 - **Headless Service:** A headless service (`redis-headless`) is used to allow direct pod-to-pod communication for Redis.
