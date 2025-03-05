@@ -31,7 +31,7 @@ This repository contains the fixed and enhanced version of a Go web application 
 - **Base Image Optimization:** Switched to a multi-stage build using a lightweight base image (e.g., `alpine` or `scratch`) to reduce the final image size.
 - **Dependency Management:** Ensured `go.mod` and `go.sum` files are copied first for layer caching.
 - **Correct Build & CMD:** Fixed build commands and the executable path in the final stage CMD ["bin/myapp"] to CMD ["app/myapp"].
-<img src="./Images/image_size.png" alt="Image Size Optimization" width="500" />
+<img src="Images/image_size.png" alt="Image Size Optimization" width="500" />
 
 
 
